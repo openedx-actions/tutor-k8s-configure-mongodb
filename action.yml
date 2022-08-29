@@ -1,0 +1,64 @@
+#------------------------------------------------------------------------------
+# usage: configure tutor MongoDB email service
+#------------------------------------------------------------------------------
+name: Open edX Tutor k8s configure MongoDB service
+description: Github Action to use Tutor to configure a remote MongoDB service for use with Open edX running on AWS EKS Kubernetes
+branding:
+  icon: 'cloud'
+  color: 'orange'
+inputs:
+  namespace:
+    description: 'The Kubernetes namesapce to which the Open edX platform environment will be deployed. Example: openedx-prod'
+    required: true
+    type: string
+  remote-server:
+    description: 'True if a remote MongoDB server exists. Default: false'
+    required: false
+    type: string
+    default: "false"
+runs:
+  using: "composite"
+  steps:
+    # retrieve the MongoDB connection parameters that we created in Terraform
+    # and then stored in Kubernetes secrets. These include:
+    #   MONGODB_HOST: mongodb.stepwisemath.ai
+    #   MONGODB_PORT: "27017"
+    #   MONGODB_ADMIN_PASSWORD: **************
+    #   MONGODB_ADMIN_USERNAME: admin
+    - name: fetch MongoDB admin configuration from Kubernetes secrets
+      id: get-admin-secret
+      uses: openedx-actions/tutor-k8s-get-secret@v1.0.0
+      with:
+        eks-namespace: ${{ inputs.namespace }}
+        eks-secret-name: mongodb-admin
+
+    # retrieve the MongoDB connection parameters that we created in Terraform
+    # and then stored in Kubernetes secrets. These include:
+    #   MONGODB_HOST: mongodb.stepwisemath.ai
+    #   MONGODB_PORT: "27017"
+    #   OPENEDX_MONGODB_DB: webstepwisemathai_prod_edx
+    #   OPENEDX_MONGODB_PASSWORD: **************
+    #   OPENEDX_MONGODB_USERNAME: webstepwisemathai_prod_edx
+    - name: fetch MongoDB openedx configuration from Kubernetes secrets
+      id: get-openedx-secret
+      uses: openedx-actions/tutor-k8s-get-secret@v1.0.0
+      with:
+        eks-namespace: ${{ inputs.namespace }}
+        eks-secret-name: mongodb-openedx
+
+    - name: set for default, mongodb pod in k8s
+      id: set-customized-environment-variables
+      if: ${{ inputs.remote-server }} == 'false'
+      shell: bash
+      run: echo "TUTOR_RUN_MONGODB=true" >> $GITHUB_ENV
+
+    - name: set for remote server
+      id: set-customized-environment-variables
+      if: ${{ inputs.remote-server }} == 'true'
+      shell: bash
+      run: echo "TUTOR_RUN_MONGODB=false" >> $GITHUB_ENV
+
+    - name: configure tutor
+      id: save-config
+      shell: bash
+      run: tutor config save
