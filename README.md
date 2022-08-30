@@ -48,7 +48,7 @@ jobs:
 
       # This action.
       - name: Configure remote MongoDB service
-        uses: openedx-actions/tutor-service-configure-mongodb@v1.0.0
+        uses: openedx-actions/tutor-service-configure-mongodb@v1.0.1
         with:
           namespace: openedx-prod
           remote-server: false

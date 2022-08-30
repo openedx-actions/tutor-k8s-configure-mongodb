@@ -47,13 +47,13 @@ runs:
         eks-secret-name: mongodb-openedx
 
     - name: set for default, mongodb pod in k8s
-      id: set-customized-environment-variables
+      id: set-default-environment-variables
       if: ${{ inputs.remote-server }} == 'false'
       shell: bash
       run: echo "TUTOR_RUN_MONGODB=true" >> $GITHUB_ENV
 
     - name: set for remote server
-      id: set-customized-environment-variables
+      id: set-remote-environment-variables
       if: ${{ inputs.remote-server }} == 'true'
       shell: bash
       run: echo "TUTOR_RUN_MONGODB=false" >> $GITHUB_ENV
